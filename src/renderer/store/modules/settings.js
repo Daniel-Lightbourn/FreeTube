@@ -477,6 +477,17 @@ const customActions = {
           console.error('playlists: invalid sync event received')
       }
     })
+
+    ipcRenderer.on(IpcChannels.SYNC_COMMENTS, (_, { event, data }) => {
+      switch (event) {
+        case SyncEvents.GENERAL.UPSERT:
+          commit('highlightVideoComment', data)
+          break
+
+        default:
+          console.error('playlists: invalid sync event received')
+      }
+    })
   }
 }
 

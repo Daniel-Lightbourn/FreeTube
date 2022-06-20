@@ -76,6 +76,8 @@
   font-weight: normal;
   margin-left: 5px;
   font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
 }
 
 .commentMemberIcon {

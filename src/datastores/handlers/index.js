@@ -10,10 +10,12 @@ const DBSettingHandlers = handlers.settings
 const DBHistoryHandlers = handlers.history
 const DBProfileHandlers = handlers.profiles
 const DBPlaylistHandlers = handlers.playlists
+const DBCommentHandlers = handlers.comments
 
 export {
   DBSettingHandlers,
   DBHistoryHandlers,
   DBProfileHandlers,
-  DBPlaylistHandlers
+  DBPlaylistHandlers,
+  DBCommentHandlers
 }

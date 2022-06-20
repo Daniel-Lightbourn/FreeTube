@@ -110,11 +110,26 @@ class Playlists {
   }
 }
 
+class Comments {
+  static find() {
+    return baseHandlers.comments.find()
+  }
+
+  static upsertHighlightedComment(videoId, comment) {
+    return baseHandlers.comments.upsertHighlightedComment(videoId, comment)
+  }
+
+  static deleteHighlightedComment(videoId, comment) {
+    return baseHandlers.comments.deleteHighlightedComment(videoId, comment)
+  }
+}
+
 const handlers = {
   settings: Settings,
   history: History,
   profiles: Profiles,
-  playlists: Playlists
+  playlists: Playlists,
+  comments: Comments
 }
 
 export default handlers

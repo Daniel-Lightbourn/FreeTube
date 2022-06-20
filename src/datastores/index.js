@@ -17,5 +17,6 @@ db.settings = Datastore.create({ filename: dbPath('settings'), autoload: true })
 db.profiles = Datastore.create({ filename: dbPath('profiles'), autoload: true })
 db.playlists = Datastore.create({ filename: dbPath('playlists'), autoload: true })
 db.history = Datastore.create({ filename: dbPath('history'), autoload: true })
+db.comments = Datastore.create({ filename: dbPath('comments'), autoload: true })
 
 export default db

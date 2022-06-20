@@ -19,11 +19,13 @@ const IpcChannels = {
   DB_HISTORY: 'db-history',
   DB_PROFILES: 'db-profiles',
   DB_PLAYLISTS: 'db-playlists',
+  DB_COMMENTS: 'db-comments',
 
   SYNC_SETTINGS: 'sync-settings',
   SYNC_HISTORY: 'sync-history',
   SYNC_PROFILES: 'sync-profiles',
-  SYNC_PLAYLISTS: 'sync-playlists'
+  SYNC_PLAYLISTS: 'sync-playlists',
+  SYNC_COMMENTS: 'sync-comments'
 }
 
 const DBActions = {

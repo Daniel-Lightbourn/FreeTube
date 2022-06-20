@@ -38,6 +38,57 @@
       v-if="commentData.length > 0 && showComments"
     >
       <div
+        v-if="highlightedCommentData.length > 0 && showComments"
+      >
+        <h4>
+          {{ $t("Comments.Highlighted Comments") }}
+        </h4>
+              <div
+        v-for="(comment, index) in highlightedCommentData"
+        :key="index"
+        class="comment"
+      >
+        <img
+          :src="comment.authorThumb"
+          class="commentThumbnail"
+          @click="goToChannel(comment.authorLink)"
+        >
+        <p
+          class="commentAuthorWrapper"
+        >
+          <span
+            class="commentAuthor"
+            :class="{
+              commentOwner: comment.isOwner
+            }"
+            @click="goToChannel(comment.authorLink)"
+          >
+            {{ comment.author }}
+          </span>
+          <img
+            v-if="comment.isMember"
+            :src="comment.memberIconUrl"
+            :title="$t('Comments.Member')"
+            :aria-label="$t('Comments.Member')"
+            class="commentMemberIcon"
+            alt=""
+          >
+          <span
+            class="commentDate"
+            @click="unhighlightComment(comment)"
+          >
+            {{ comment.time }}
+          </span>
+        </p>
+        <ft-timestamp-catcher
+          class="commentText"
+          :input-html="comment.text"
+          @timestamp-event="onTimestamp"
+        />
+      </div>
+        <hr/>
+      </div>
+      <div
         v-for="(comment, index) in commentData"
         :key="index"
         class="comment"
@@ -76,7 +127,10 @@
             class="commentMemberIcon"
             alt=""
           >
-          <span class="commentDate">
+          <span
+            class="commentDate"
+            @click="highlightComment(index)"
+          >
             {{ comment.time }}
           </span>
         </p>
@@ -151,7 +205,10 @@
                 class="commentMemberIcon"
                 alt=""
               >
-              <span class="commentDate">
+              <span
+                class="commentDate"
+                @click="highlightCommentReply(index, replyIndex)"
+              >
                 {{ reply.time }}
               </span>
             </p>

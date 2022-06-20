@@ -188,11 +188,38 @@ class Playlists {
   }
 }
 
+class Comments {
+  static find() {
+    return ipcRenderer.invoke(IpcChannels.DB_COMMENTS, { action: DBActions.GENERAL.FIND })
+  }
+
+  static upsertHighlightedComment(videoId, comment) {
+    return ipcRenderer.invoke(
+      IpcChannels.DB_COMMENTS,
+      {
+        action: DBActions.GENERAL.UPSERT,
+        data: { videoId, comment }
+      }
+    )
+  }
+
+  static deleteHighlightedComment(videoId, comment) {
+    return ipcRenderer.invoke(
+      IpcChannels.DB_COMMENTS,
+      {
+        action: DBActions.GENERAL.DELETE,
+        data: { videoId, comment }
+      }
+    )
+  }
+}
+
 const handlers = {
   settings: Settings,
   history: History,
   profiles: Profiles,
-  playlists: Playlists
+  playlists: Playlists,
+  comments: Comments,
 }
 
 export default handlers

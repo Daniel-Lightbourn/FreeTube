@@ -668,6 +668,32 @@ function runApp() {
   })
 
   // *********** //
+  // Comments
+  ipcMain.handle(IpcChannels.DB_COMMENTS, async (event, { action, data }) => {
+    try {
+      switch (action) {
+        case DBActions.GENERAL.FIND:
+          return await baseHandlers.comments.find()
+
+        case DBActions.GENERAL.UPSERT:
+          await baseHandlers.comments.upsertHighlightedComment(data.videoId, data.comment)
+          return null
+
+        case DBActions.GENERAL.DELETE:
+          await baseHandlers.comments.deleteHighlightedComment(data.videoId, data.comment)
+          return null
+
+        default:
+          // eslint-disable-next-line no-throw-literal
+          throw 'invalid comments db action'
+      }
+    } catch (err) {
+      if (typeof err === 'string') throw err
+      else throw err.toString()
+    }
+  })
+
+  // *********** //
 
   function syncOtherWindows(channel, event, payload) {
     const otherWindows = BrowserWindow.getAllWindows().filter((window) => {

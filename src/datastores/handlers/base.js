@@ -147,11 +147,34 @@ class Playlists {
   }
 }
 
+class Comments {
+  static find() {
+    return db.comments.find({})
+  }
+
+  static upsertHighlightedComment(videoId, comment) {
+    return db.comments.update(
+      { videoId: videoId },
+      { $push: { highlighted: comment } },
+      { upsert: true }
+    )
+  }
+
+  static deleteHighlightedComment(videoId, comment) {
+    return db.comments.update(
+      { videoId: videoId },
+      { $pull: { highlighted: comment } },
+      { upsert: true }
+    )
+  }
+}
+
 const baseHandlers = {
   settings: Settings,
   history: History,
   profiles: Profiles,
-  playlists: Playlists
+  playlists: Playlists,
+  comments: Comments,
 }
 
 export default baseHandlers

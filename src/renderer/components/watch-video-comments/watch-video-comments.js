@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import { mapActions } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
 import FtCard from '../ft-card/ft-card.vue'
 import FtLoader from '../../components/ft-loader/ft-loader.vue'
 import FtSelect from '../../components/ft-select/ft-select.vue'
@@ -36,12 +36,17 @@ export default Vue.extend({
       commentScraper: null,
       nextPageToken: null,
       commentData: [],
+      highlightedCommentData: [],
       sortNewest: false,
       commentProcess: null,
       sortingChanged: false
     }
   },
   computed: {
+    ...mapGetters([
+      'getHighlightedComments'
+    ]),
+
     isDev: function () {
       return process.env.NODE_ENV === 'development'
     },
@@ -121,6 +126,11 @@ export default Vue.extend({
 
     getCommentData: function () {
       this.isLoading = true
+
+
+      this.highlightedCommentData = this.getHighlightedComments(this.id)
+      console.log(this.highlightedCommentData)
+
       switch (this.backendPreference) {
         case 'local':
           this.getCommentDataLocal({
@@ -161,27 +171,37 @@ export default Vue.extend({
       }
     },
 
-    getCommentReplies: function (index) {
+    toggleHighlightReplies: function(index) {
+      if (this.highlightedCommentData[index].showReplies || this.highlightedCommentData[index].replies.length > 0) {
+        this.highlightedCommentData[index].showReplies = !this.highlightedCommentData[index].showReplies
+      } else {
+        this.getCommentReplies(index, true)
+      }
+    },
+
+    getCommentReplies: function(index, isHighlighted = false) {
       switch (this.commentData[index].dataType) {
         case 'local':
           this.getCommentRepliesLocal({
             videoId: this.id,
             setCookie: false,
             sortByNewest: this.sortNewest,
-            replyToken: this.commentData[index].replyToken,
+            replyToken: isHighlighted ? this.highlightedCommentData[index].replyToken : this.commentData[index].replyToken,
             index: index
-          })
+          }, isHighlighted)
           break
         case 'invidious':
-          this.getCommentRepliesInvidious(index)
+          this.getCommentRepliesInvidious(index, isHighlighted)
           break
       }
     },
 
     getCommentDataLocal: function (payload) {
-      ytcm.getComments(payload).then((response) => {
+      ytcm.getComments(payload)
+        .then((response) => {
         this.parseLocalCommentData(response, null)
-      }).catch((err) => {
+        })
+        .catch((err) => {
         console.log(err)
         const errorMessage = this.$t('Local API Error (Click to copy)')
         this.showToast({
@@ -209,14 +229,16 @@ export default Vue.extend({
       })
     },
 
-    getCommentRepliesLocal: function (payload) {
+    getCommentRepliesLocal: function(payload, isHighlighted = false) {
       this.showToast({
         message: this.$t('Comments.Getting comment replies, please wait')
       })
 
-      ytcm.getCommentReplies(payload).then((response) => {
-        this.parseLocalCommentData(response, payload.index)
-      }).catch((err) => {
+      ytcm.getCommentReplies(payload)
+        .then((response) => {
+          this.parseLocalCommentData(response, payload.index, isHighlighted = false)
+        })
+        .catch((err) => {
         console.log(err)
         const errorMessage = this.$t('Local API Error (Click to copy)')
         this.showToast({
@@ -244,7 +266,7 @@ export default Vue.extend({
       })
     },
 
-    parseLocalCommentData: function (response, index = null) {
+    parseLocalCommentData: function(response, index = null, isHighlighted = false) {
       const commentData = response.comments.map((comment) => {
         comment.authorLink = comment.authorId
         comment.showReplies = false
@@ -260,9 +282,11 @@ export default Vue.extend({
           isLive: false,
           isUpcoming: false,
           isRSS: false
-        }).then((data) => {
+          })
+          .then((data) => {
           comment.time = data
-        }).catch((error) => {
+          })
+          .catch((error) => {
           console.error(error)
         })
         if (this.hideCommentLikes) {
@@ -279,10 +303,18 @@ export default Vue.extend({
       })
 
       if (index !== null) {
+        if (isHighlighted) {
         if (this.commentData[index].replies.length === 0 || this.commentData[index].replies[this.commentData[index].replies.length - 1].commentId !== commentData[commentData.length - 1].commentId) {
           this.commentData[index].replies = this.commentData[index].replies.concat(commentData)
           this.commentData[index].replyToken = response.continuation
           this.commentData[index].showReplies = true
+        }
+        } else {
+          if (this.highlightedCommentData[index].replies.length === 0 || this.highlightedCommentData[index].replies[this.highlightedCommentData[index].replies.length - 1].commentId !== commentData[commentData.length - 1].commentId) {
+            this.highlightedCommentData[index].replies = this.highlightedCommentData[index].replies.concat(commentData)
+            this.highlightedCommentData[index].replyToken = response.continuation
+            this.highlightedCommentData[index].showReplies = true
+          }
         }
       } else {
         if (this.sortingChanged) {
@@ -297,7 +329,8 @@ export default Vue.extend({
     },
 
     getCommentDataInvidious: function (payload) {
-      this.invidiousAPICall(payload).then((response) => {
+      this.invidiousAPICall(payload)
+        .then((response) => {
         const commentData = response.comments.map((comment) => {
           comment.showReplies = false
           comment.authorLink = comment.authorId
@@ -330,7 +363,8 @@ export default Vue.extend({
         this.nextPageToken = response.continuation
         this.isLoading = false
         this.showComments = true
-      }).catch((xhr) => {
+        })
+        .catch((xhr) => {
         console.log('found an error')
         console.log(xhr)
         const errorMessage = this.$t('Invidious API Error (Click to copy)')
@@ -352,7 +386,7 @@ export default Vue.extend({
       })
     },
 
-    getCommentRepliesInvidious: function (index) {
+    getCommentRepliesInvidious: function(index, isHighlighted = false) {
       this.showToast({
         message: this.$t('Comments.Getting comment replies, please wait')
       })
@@ -360,11 +394,12 @@ export default Vue.extend({
         resource: 'comments',
         id: this.id,
         params: {
-          continuation: this.commentData[index].replyContinuation
+          continuation: isHighlighted ? this.highlightedCommentData[index].replyContinuation : this.commentData[index].replyContinuation
         }
       }
 
-      this.invidiousAPICall(payload).then((response) => {
+      this.invidiousAPICall(payload)
+        .then((response) => {
         const commentData = response.comments.map((comment) => {
           comment.showReplies = false
           comment.authorLink = comment.authorId
@@ -384,10 +419,16 @@ export default Vue.extend({
           return comment
         })
 
+          if (isHighlighted) {
+            this.highlightedCommentData[index].replies = commentData
+            this.highlightedCommentData[index].showReplies = true
+          } else {
         this.commentData[index].replies = commentData
         this.commentData[index].showReplies = true
+          }
         this.isLoading = false
-      }).catch((xhr) => {
+        })
+        .catch((xhr) => {
         console.log('found an error')
         console.log(xhr)
         const errorMessage = this.$t('Invidious API Error (Click to copy)')
@@ -402,12 +443,59 @@ export default Vue.extend({
       })
     },
 
+    getLeanComment: function(comment) {
+      let commentLean = {}
+
+      commentLean.verified = comment.verified
+      commentLean.author = comment.author
+      commentLean.authorThumbnails = comment.authorThumbnails
+      commentLean.authorId = comment.authorId
+      commentLean.authorUrl = comment.authorUrl
+      commentLean.isEdited = comment.isEdited
+      commentLean.text = comment.text
+      commentLean.published = comment.published
+      commentLean.commentId = comment.commentId
+      commentLean.authorIsChannelOwner = comment.authorIsChannelOwner
+      commentLean.authorThumb = comment.authorThumb
+      commentLean.authorLink = comment.authorLink
+      commentLean.isMember = comment.isMember
+      commentLean.memberIconUrl = comment.memberIconUrl
+
+      return commentLean
+    },
+
+    highlightComment: function(index) {
+      this.showToast({
+        message: "highlight comment " + this.id
+      })
+      let commentStore = this.getLeanComment(this.commentData[index])
+
+      this.highlightVideoComment({ videoId: `${this.id}`, comment: `${JSON.stringify(commentStore)}` });
+      this.highlightedCommentData.push(commentStore)
+    },
+
+    highlightCommentReply: function(index, replyIndex) {
+      this.showToast({
+        message: "highlight replay"
+      })
+    },
+
+    unhighlightComment: function(comment) {
+      this.showToast({
+        message: "unhighlight comment"
+      })
+      this.unhighlightVideoComment({ videoId: `${this.id}`, comment: `${JSON.stringify(comment)}` });
+      this.highlightedCommentData = this.highlightedCommentData.filter((e) => e.commentId != comment.commentId)
+    },
+
     goToChannel: function (channelId) {
       this.$router.push({ path: `/channel/${channelId}` })
     },
 
     ...mapActions([
       'showToast',
+      'highlightVideoComment',
+      'unhighlightVideoComment',
       'toLocalePublicationString',
       'invidiousAPICall'
     ])
